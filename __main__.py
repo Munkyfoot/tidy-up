@@ -27,64 +27,36 @@ while PATH_CORRECT == False:
     else:
         print("Path is invalid. Please try again.")
 
-print("Scanning for duplicates...")
+print("Scanning files...")
 
-FILES = {}
+FILES = []
 
 for full_path in glob.glob(os.path.join(PATH, '**'), recursive=True):
     if os.path.isdir(full_path):
         scan = os.scandir(full_path)
         for item in scan:
             if item.is_file():
-                stat = item.stat()
-                meta = {
-                    'mode': stat.st_mode,
-                    'size': stat.st_size,
-                    'last_mod': stat.st_mtime,
-                    'last_access': stat.st_atime,
-                    'created': stat.st_ctime
-                }
-                if item.name in FILES:
-                    FILES[item.name].append((item.path, meta))
-                else:
-                    FILES[item.name] = [(item.path, meta)]
+                FILES.append(item)
 
-DUPLICATES = []
-DUPLICATES_FULL_INFO = []
+print("{} file{} found.".format(len(FILES), ['', 's'][int(len(FILES) > 1)]))
+print("Looking for duplicates...")
 
-for key in FILES:
-    files = FILES[key]
-    if len(files) > 1:
-        clones = []
-        diff = []
-        dups = []
-        for f in files:
-            f_path, f_meta = f
-            dups.append(f)
-            for c in files:
-                c_path, c_meta = c
-                if f_path == c_path:
-                    continue
+DUPLICATE_CHECK = {}
 
-                if filecmp.cmp(f_path, c_path):
-                    if f not in clones:
-                        clones.append(f)
-                else:
-                    if f not in diff:
-                        diff.append(f)
-
-        outliers = [o for o in diff if o not in clones]
-
-        DUPLICATES.append(tuple(dups))
-        DUPLICATES_FULL_INFO.append({
-            'clones': clones,
-            'outliers': outliers
-        })
+for f in FILES:
+    if f.name in DUPLICATE_CHECK:
+        DUPLICATE_CHECK[f.name].append(f)
+    else:
+        DUPLICATE_CHECK[f.name] = [f]
 
 DUPLICATE_COUNT = 0
+DUPLICATES = []
 
-for dups in DUPLICATES:
-    DUPLICATE_COUNT += len(dups)
+for name in DUPLICATE_CHECK:
+    count = len(DUPLICATE_CHECK[name])
+    if count > 1:
+        DUPLICATE_COUNT += count
+        DUPLICATES.append(tuple(DUPLICATE_CHECK[name]))
 
 if DUPLICATE_COUNT > 0:
     print("You have {} instance{} of duplication over {} file{}.".format(len(DUPLICATES), [
@@ -125,7 +97,8 @@ if DUPLICATE_COUNT > 0:
             preferred = None
             if set_preferred:
                 if auto_set_preferred:
-                    preferred = sorted(dups, key=lambda x: x[1]['size'], reverse=True)[0]
+                    preferred = sorted(
+                        dups, key=lambda x: x.stat().st_size, reverse=True)[0]
                 else:
                     print("Choose the preferred file from this set of duplicates:")
                     for i, f in enumerate(dups):
@@ -146,7 +119,8 @@ if DUPLICATE_COUNT > 0:
                 print("Removing unwanted duplicates...")
 
             for i, f in enumerate(dups):
-                path, meta = f
+                item = f
+                path = item.path
                 if choice == 1:
                     filename = path.split(os.sep)[-1]
                     path_to = path[:len(path) - len(filename)]
