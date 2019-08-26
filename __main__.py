@@ -125,7 +125,7 @@ if DUPLICATE_COUNT > 0:
             preferred = None
             if set_preferred:
                 if auto_set_preferred:
-                    preferred = sorted(dups, key=lambda x: x[1]['size'])[0]
+                    preferred = sorted(dups, key=lambda x: x[1]['size'], reverse=True)[0]
                 else:
                     print("Choose the preferred file from this set of duplicates:")
                     for i, f in enumerate(dups):
