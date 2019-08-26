@@ -27,6 +27,8 @@ while PATH_CORRECT == False:
     else:
         print("Path is invalid. Please try again.")
 
+print("Scanning for duplicates...")
+
 FILES = {}
 
 for full_path in glob.glob(os.path.join(PATH, '**'), recursive=True):
