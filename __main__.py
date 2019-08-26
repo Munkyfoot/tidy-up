@@ -129,12 +129,25 @@ if DUPLICATE_COUNT > 0:
                     else:
                         print("Invalid choice.")
 
+            if choice == 1:
+                print("Renaming files...")
+            elif choice == 2:
+                print("Removing unwanted duplicates...")
+
             for i, f in enumerate(dups):
                 path, meta = f
                 if choice == 1:
                     filename = path.split(os.sep)[-1]
                     path_to = path[:len(path) - len(filename)]
-                    modified = "{}{}{}".format(path_to, ['dup-','dup-pref-'][int(f == preferred)], filename)
+                    modified = "{}{}{}".format(
+                        path_to, ['dup_', 'dup_pref_'][int(f == preferred)], filename)
                     os.rename(path, modified)
+                if choice == 2:
+                    if f != preferred:
+                        os.remove(path)
+            
+            print("Done!")
+
+        print("All finished! Looking nice and clean in here.")
 else:
     print("No duplicates found. It looks clean in here!")
