@@ -1,7 +1,6 @@
 import os
 import sys
 import glob
-import filecmp
 
 ARGS = sys.argv
 PATH = os.getcwd()
@@ -39,100 +38,127 @@ for full_path in glob.glob(os.path.join(PATH, '**'), recursive=True):
                 FILES.append(item)
 
 print("{} file{} found.".format(len(FILES), ['', 's'][int(len(FILES) > 1)]))
-print("Looking for duplicates...")
 
-DUPLICATE_CHECK = {}
+print("Would you like to search for duplicates?")
 
-for f in FILES:
-    if f.name in DUPLICATE_CHECK:
-        DUPLICATE_CHECK[f.name].append(f)
-    else:
-        DUPLICATE_CHECK[f.name] = [f]
+if input("[y/n] ") == 'y':
+    print("Looking for duplicates...")
 
-DUPLICATE_COUNT = 0
-DUPLICATES = []
+    DUPLICATE_CHECK = {}
 
-for name in DUPLICATE_CHECK:
-    count = len(DUPLICATE_CHECK[name])
-    if count > 1:
-        DUPLICATE_COUNT += count
-        DUPLICATES.append(tuple(DUPLICATE_CHECK[name]))
-
-if DUPLICATE_COUNT > 0:
-    print("You have {} instance{} of duplication over {} file{}.".format(len(DUPLICATES), [
-        '', 's'][int(len(DUPLICATES) > 1)], DUPLICATE_COUNT, ['', 's'][int(DUPLICATE_COUNT > 1)]))
-
-    print("How would you like to clean up these duplicates?",
-          "0 - Do nothing.",
-          "1 - Add 'dup' tag to file names (option to mark one as preferred)",
-          "2 - Remove duplicates (select one to save)",
-          sep='\n')
-
-    choosing = True
-    while choosing:
-        choice = int(input())
-        if choice in [0, 1, 2]:
-            choosing = False
+    for f in FILES:
+        if f.name in DUPLICATE_CHECK:
+            DUPLICATE_CHECK[f.name].append(f)
         else:
-            print("Invalid choice.")
+            DUPLICATE_CHECK[f.name] = [f]
 
-    if choice == 0:
-        print("You have chosen to do nothing.")
-        exit()
-    elif choice in [1, 2]:
-        if choice == 1:
-            print("You have chosen to tag the file names. Would you like to mark a preferred file for each set of duplicates?")
-            set_preferred = input("[y/n] ") == 'y'
-        elif choice == 2:
-            print(
-                "You have chosen to remove unwanted duplicates. You will need to mark preferred files to save.")
-            set_preferred = True
+    DUPLICATE_COUNT = 0
+    DUPLICATES = []
 
-        if set_preferred:
-            print(
-                "Would you like to automatically mark the duplicates with the largest file size as preferred?")
-            auto_set_preferred = input("[y/n] ") == 'y'
+    for name in DUPLICATE_CHECK:
+        count = len(DUPLICATE_CHECK[name])
+        if count > 1:
+            DUPLICATE_COUNT += count
+            DUPLICATES.append(tuple(DUPLICATE_CHECK[name]))
 
-        for dups in DUPLICATES:
-            preferred = None
-            if set_preferred:
-                if auto_set_preferred:
-                    preferred = sorted(
-                        dups, key=lambda x: x.stat().st_size, reverse=True)[0]
-                else:
-                    print("Choose the preferred file from this set of duplicates:")
-                    for i, f in enumerate(dups):
-                        print('{} - {}'.format(i, f))
+    if DUPLICATE_COUNT > 0:
+        print("You have {} instance{} of duplication over {} file{}.".format(len(DUPLICATES), [
+            '', 's'][int(len(DUPLICATES) > 1)], DUPLICATE_COUNT, ['', 's'][int(DUPLICATE_COUNT > 1)]))
 
-                    choosing = True
-                    while choosing:
-                        pref = int(input())
-                        if pref in range(len(dups)):
-                            preferred = dups[pref]
-                            choosing = False
-                        else:
-                            print("Invalid choice.")
+        print("How would you like to clean up these duplicates?",
+              "0 - Do nothing.",
+              "1 - Add 'dup' tag to file names (option to mark one as preferred)",
+              "2 - Remove duplicates (select one to save)",
+              sep='\n')
 
+        choosing = True
+        while choosing:
+            choice = int(input())
+            if choice in [0, 1, 2]:
+                choosing = False
+            else:
+                print("Invalid choice.")
+
+        if choice == 0:
+            print("You have chosen to do nothing.")
+        elif choice in [1, 2]:
             if choice == 1:
-                print("Renaming files...")
+                print(
+                    "You have chosen to tag the file names. Would you like to mark a preferred file for each set of duplicates?")
+                set_preferred = input("[y/n] ") == 'y'
             elif choice == 2:
-                print("Removing unwanted duplicates...")
+                print(
+                    "You have chosen to remove unwanted duplicates. You will need to mark preferred files to save.")
+                set_preferred = True
 
-            for i, f in enumerate(dups):
-                item = f
-                path = item.path
+            if set_preferred:
+                print(
+                    "Would you like to automatically mark the duplicates with the largest file size as preferred?")
+                auto_set_preferred = input("[y/n] ") == 'y'
+
+            for dups in DUPLICATES:
+                preferred = None
+                if set_preferred:
+                    if auto_set_preferred:
+                        preferred = sorted(
+                            dups, key=lambda x: x.stat().st_size, reverse=True)[0]
+                    else:
+                        print(
+                            "Choose the preferred file from this set of duplicates:")
+                        for i, f in enumerate(dups):
+                            print('{} - {}'.format(i, f))
+
+                        choosing = True
+                        while choosing:
+                            pref = int(input())
+                            if pref in range(len(dups)):
+                                preferred = dups[pref]
+                                choosing = False
+                            else:
+                                print("Invalid choice.")
+
                 if choice == 1:
-                    filename = path.split(os.sep)[-1]
-                    path_to = path[:len(path) - len(filename)]
-                    modified = "{}{}{}".format(
-                        path_to, ['dup_', 'dup_pref_'][int(f == preferred)], filename)
-                    os.rename(path, modified)
-                if choice == 2:
-                    if f != preferred:
-                        os.remove(path)
+                    print("Renaming files...")
+                elif choice == 2:
+                    print("Removing unwanted duplicates...")
 
-            print("Done!")
+                for i, f in enumerate(dups):
+                    item = f
+                    path = item.path
+                    if choice == 1:
+                        filename = path.split(os.sep)[-1]
+                        path_to = path[:len(path) - len(filename)]
+                        modified = "{}{}{}".format(
+                            path_to, ['dup_', 'dup_pref_'][int(f == preferred)], filename)
+                        os.rename(path, modified)
+                    if choice == 2:
+                        if f != preferred:
+                            os.remove(path)
 
-        print("All finished! Looking nice and clean in here.")
-else:
-    print("No duplicates found. It looks clean in here!")
+                print("Done!")
+
+            print("All finished! Looking nice and clean in here.")
+    else:
+        print("No duplicates found. It looks clean in here!")
+
+print("Would you like to organize your files by type? (WARNING: Duplicate files will be renamed making them unable to be easily removed in the future. If you believe there are duplicate files please be sure to remove them prior to organizing by type.)")
+if input("[y/n] ") == 'y':
+    print("Organizing files...")
+    FILE_PATH_BY_TYPE = {}
+
+    for f in FILES:
+        file_type = f.name.split('.')[-1]
+        if file_type in FILE_PATH_BY_TYPE:
+            FILE_PATH_BY_TYPE[file_type].append(f)
+        else:
+            FILE_PATH_BY_TYPE[file_type] = [f]
+
+    for f_type in FILE_PATH_BY_TYPE:
+        type_dir = os.path.join(PATH, f_type)
+        os.makedirs(type_dir)
+        files = FILE_PATH_BY_TYPE[f_type]
+        for i, f in enumerate(files):
+            os.rename(f.path, os.path.join(
+                type_dir, "{}_{}".format(i, f.name)))
+
+print("All done here. Thanks for using tidy-up.")
