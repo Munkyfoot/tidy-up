@@ -159,6 +159,6 @@ if input("[y/n] ") == 'y':
         files = FILE_PATH_BY_TYPE[f_type]
         for i, f in enumerate(files):
             os.rename(f.path, os.path.join(
-                type_dir, "{}_{}".format(i, f.name)))
+                type_dir, f.path.replace(os.sep, '+')))
 
 print("All done here. Thanks for using tidy-up.")
