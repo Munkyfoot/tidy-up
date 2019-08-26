@@ -113,21 +113,28 @@ if DUPLICATE_COUNT > 0:
             print("You have chosen to remove unwanted duplicates. Please choose the file you would like to save from each set of duplicates")
             set_preferred = True
 
+        if set_preferred:
+            print("Would you like to automatically mark the duplicates with the largest file size as preferred?")
+            auto_set_preferred = input("[y/n] ") == 'y'
+
         for dups in DUPLICATES:
             preferred = None
             if set_preferred:
-                print("Choose the preferred file from this set of duplicates:")
-                for i, f in enumerate(dups):
-                    print('{} - {}'.format(i, f))
+                if auto_set_preferred:
+                    preferred = sorted(dups, key=lambda x : x[1]['size'])[0]
+                else:
+                    print("Choose the preferred file from this set of duplicates:")
+                    for i, f in enumerate(dups):
+                        print('{} - {}'.format(i, f))
 
-                choosing = True
-                while choosing:
-                    pref = int(input())
-                    if pref in range(len(dups)):
-                        preferred = dups[pref]
-                        choosing = False
-                    else:
-                        print("Invalid choice.")
+                    choosing = True
+                    while choosing:
+                        pref = int(input())
+                        if pref in range(len(dups)):
+                            preferred = dups[pref]
+                            choosing = False
+                        else:
+                            print("Invalid choice.")
 
             if choice == 1:
                 print("Renaming files...")
