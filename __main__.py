@@ -110,18 +110,20 @@ if DUPLICATE_COUNT > 0:
             print("You have chosen to tag the file names. Would you like to mark a preferred file for each set of duplicates?")
             set_preferred = input("[y/n] ") == 'y'
         elif choice == 2:
-            print("You have chosen to remove unwanted duplicates. Please choose the file you would like to save from each set of duplicates")
+            print(
+                "You have chosen to remove unwanted duplicates. You will need to mark preferred files to save.")
             set_preferred = True
 
         if set_preferred:
-            print("Would you like to automatically mark the duplicates with the largest file size as preferred?")
+            print(
+                "Would you like to automatically mark the duplicates with the largest file size as preferred?")
             auto_set_preferred = input("[y/n] ") == 'y'
 
         for dups in DUPLICATES:
             preferred = None
             if set_preferred:
                 if auto_set_preferred:
-                    preferred = sorted(dups, key=lambda x : x[1]['size'])[0]
+                    preferred = sorted(dups, key=lambda x: x[1]['size'])[0]
                 else:
                     print("Choose the preferred file from this set of duplicates:")
                     for i, f in enumerate(dups):
@@ -152,7 +154,7 @@ if DUPLICATE_COUNT > 0:
                 if choice == 2:
                     if f != preferred:
                         os.remove(path)
-            
+
             print("Done!")
 
         print("All finished! Looking nice and clean in here.")
