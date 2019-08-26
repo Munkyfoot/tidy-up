@@ -35,7 +35,13 @@ for full_path in glob.glob(os.path.join(PATH, '**'), recursive=True):
         scan = os.scandir(full_path)
         for item in scan:
             if item.is_file():
-                FILES.append(item)
+                stat = item.stat()
+                item_info = {
+                    'path' : item.path,
+                    'name' : item.name,
+                    'size' : stat.st_size
+                }
+                FILES.append(item_info)
 
 print("{} file{} found.".format(len(FILES), ['', 's'][int(len(FILES) > 1)]))
 
@@ -46,11 +52,11 @@ if input("[y/n] ") == 'y':
 
     DUPLICATE_CHECK = {}
 
-    for f in FILES:
-        if f.name in DUPLICATE_CHECK:
-            DUPLICATE_CHECK[f.name].append(f)
+    for item in FILES:
+        if item['name'] in DUPLICATE_CHECK:
+            DUPLICATE_CHECK[item['name']].append(item)
         else:
-            DUPLICATE_CHECK[f.name] = [f]
+            DUPLICATE_CHECK[item['name']] = [item]
 
     DUPLICATE_COUNT = 0
     DUPLICATES = []
@@ -101,12 +107,12 @@ if input("[y/n] ") == 'y':
                 if set_preferred:
                     if auto_set_preferred:
                         preferred = sorted(
-                            dups, key=lambda x: x.stat().st_size, reverse=True)[0]
+                            dups, key=lambda x: x['size'], reverse=True)[0]
                     else:
                         print(
                             "Choose the preferred file from this set of duplicates:")
-                        for i, f in enumerate(dups):
-                            print('{} - {}'.format(i, f))
+                        for i, item in enumerate(dups):
+                            print('{} - {}'.format(i, item))
 
                         choosing = True
                         while choosing:
@@ -122,18 +128,21 @@ if input("[y/n] ") == 'y':
                 elif choice == 2:
                     print("Removing unwanted duplicates...")
 
-                for i, f in enumerate(dups):
-                    item = f
-                    path = item.path
+                for i, item in enumerate(dups):
+                    path = item['path']
                     if choice == 1:
                         filename = path.split(os.sep)[-1]
                         path_to = path[:len(path) - len(filename)]
-                        modified = "{}{}{}".format(
-                            path_to, ['dup_', 'dup_pref_'][int(f == preferred)], filename)
+                        mod_name = "{}{}".format(
+                            ['dup_', 'dup_pref_'][int(item == preferred)], filename)
+                        modified = "{}{}".format(path_to, mod_name)
                         os.rename(path, modified)
+                        item['path'] = modified
+                        item['name'] = mod_name
                     if choice == 2:
-                        if f != preferred:
+                        if item != preferred:
                             os.remove(path)
+                            FILES.remove(item)
 
                 print("Done!")
 
@@ -146,19 +155,19 @@ if input("[y/n] ") == 'y':
     print("Organizing files...")
     FILE_PATH_BY_TYPE = {}
 
-    for f in FILES:
-        file_type = f.name.split('.')[-1]
+    for item in FILES:
+        file_type = item['name'].split('.')[-1]
         if file_type in FILE_PATH_BY_TYPE:
-            FILE_PATH_BY_TYPE[file_type].append(f)
+            FILE_PATH_BY_TYPE[file_type].append(item)
         else:
-            FILE_PATH_BY_TYPE[file_type] = [f]
+            FILE_PATH_BY_TYPE[file_type] = [item]
 
     for f_type in FILE_PATH_BY_TYPE:
         type_dir = os.path.join(PATH, f_type)
         os.makedirs(type_dir)
         files = FILE_PATH_BY_TYPE[f_type]
-        for i, f in enumerate(files):
-            os.rename(f.path, os.path.join(
-                type_dir, f.path.replace(os.sep, '+')))
+        for i, item in enumerate(files):
+            os.rename(item['path'], os.path.join(
+                type_dir, item['path'].replace(os.sep, '+')))
 
 print("All done here. Thanks for using tidy-up.")
